@@ -1,11 +1,13 @@
+import * as dotenv from 'dotenv';
+dotenv.config();
 
-import {ApplicationConfig, BackendApplication} from './application';
+import {ApplicationConfig, Backend2Application} from './application';
 
 export * from './application';
 
 
 export async function main(options: ApplicationConfig = {}) {
-  const app = new BackendApplication(options);
+  const app = new Backend2Application(options);
   await app.boot();
   await app.start();
 

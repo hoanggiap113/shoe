@@ -14,7 +14,7 @@ import {MulterFileUploadProvider} from './providers/file-upload.provider'; // <-
 
 export {ApplicationConfig};
 
-export class BackendApplication extends BootMixin(
+export class Backend2Application extends BootMixin(
   ServiceMixin(RepositoryMixin(RestApplication)),
 ) {
   constructor(options: ApplicationConfig = {}) {
