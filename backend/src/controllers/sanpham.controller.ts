@@ -8,6 +8,7 @@ import {
   response,
   requestBody,
   HttpErrors,
+  getModelSchemaRef,
 } from '@loopback/rest';
 import {Filter} from '@loopback/repository';
 import {Sanpham} from '../models';
@@ -28,19 +29,16 @@ export class SanphamController {
     @param.query.string('ten') ten?: string,
     @param.query.number('giaTu') giaTu?: number,
     @param.query.number('giaDen') giaDen?: number,
-    @param.query.string('mauSac') mauSac?: string,
     @param.query.string('mucDich') mucDich?: string,
-    @param.query.number('maHang') maHang?: number, 
+    @param.query.number('maHang') maHang?: number[], 
   ): Promise<Sanpham[]> {
     try {
       const customParams: CustomFilterParams = {
         ten,
         giaTu,
         giaDen,
-        mauSac,
         mucDich,
         maHang,
-        
       };
       return await this.productService.getSanpham(filter,customParams);
     } catch (error) {
@@ -50,7 +48,14 @@ export class SanphamController {
 
   // GET BY ID
   @get('/products/{id}')
-  @response(200)
+  @response(200,{
+    content:{
+      'application/json': {
+        schema: getModelSchemaRef(Sanpham,{includeRelations: true})
+      }
+    }
+  }
+  )
   async getSanphamById(
     @param.path.number('id') id: number,
     @param.query.object('filter') filter?: Filter<Sanpham>,

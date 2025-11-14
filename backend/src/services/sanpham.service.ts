@@ -13,46 +13,37 @@ export class SanphamService {
     filters?: Filter<Sanpham>,
     customParams?: CustomFilterParams,
   ): Promise<Sanpham[]> {
+    // Gom điều kiện where
+    const finalWhere: any = filters?.where ? {...filters.where} : {};
 
-    let where: Where<Sanpham> = filters?.where ?? {};
-    if (customParams && Object.keys(customParams).length > 0) {
-      where = this.buildAdvancedWhere(where, customParams);
+    if (customParams) {
+      Object.assign(finalWhere, this.buildAdvancedWhere(customParams));
     }
 
     const finalFilter: Filter<Sanpham> = {
       ...filters,
-      where: where,
+      where: finalWhere,
+      include: [{relation: 'hang'}],
     };
-    let includeArray: any[] = [];
-    if (finalFilter.include) {
-      if (Array.isArray(finalFilter.include)) {
-        includeArray = finalFilter.include;
-      } else {
-        includeArray = [finalFilter.include];
-      }
-    }
-    finalFilter.include = includeArray;
-    const hasHangInclude = finalFilter.include.some(
-      (item: any) => item.relation === 'hang',
-    );
-    if (!hasHangInclude) {
-      finalFilter.include.push({relation: 'hang'});
-    }
+    console.log(finalFilter);
 
     const products = await this.sanphamRepo.find(finalFilter);
 
-    if (
-      products.length <= 0 &&
-      (Object.keys(where).length > 0 || filters?.where)
-    ) {
+    if (products.length === 0 && Object.keys(finalWhere).length > 0) {
       throw new HttpErrors.NotFound(
         'Không tìm thấy sản phẩm nào phù hợp với điều kiện lọc.',
       );
     }
+
     return products;
   }
+
   async getProductById(id: number, filter?: Filter<Sanpham>): Promise<Sanpham> {
-    const product = await this.sanphamRepo.findById(id, filter);
+    const finalFilter: Filter<Sanpham> = {
+      ...filter,
+      include: [...(filter?.include ?? []), {relation: 'hang'}],
+    };
+    const product = await this.sanphamRepo.findById(id, finalFilter);
     if (!product) {
       throw new HttpErrors.NotFound('Không tìm thấy sản phẩm');
     }
@@ -117,42 +108,32 @@ export class SanphamService {
     await this.sanphamRepo.deleteById(id);
   }
 
-  private buildAdvancedWhere(
-    baseWhere: Where<Sanpham>,
-    customParams: CustomFilterParams,
-  ): Where<Sanpham> {
-    const where: any = {...baseWhere};
-    const {ten, giaTu, giaDen, mauSac, mucDich,maHang} = customParams;
+  private buildAdvancedWhere(params: CustomFilterParams): Where<Sanpham> {
+    const where: any = {};
+    const {ten, giaTu, giaDen, mucDich, maHang} = params;
 
-    if (ten) {
-      where.TenSP = {like: `%${ten}%`, options: 'i'};
+    const andConditions: Where<Sanpham>[] = [];
+    if (ten && ten.trim() !== '') {
+      where.TenSp = {like: `%${ten}%`, options: 'i'};
     }
-
-    const giaFilter: any = (where.Gia as any) ?? {};
-    if (giaTu) {
-      giaFilter.gte = giaTu; 
+    if (giaTu !== undefined) {
+      andConditions.push({Gia: {gte: giaTu}});
     }
-    if (giaDen) {
-      giaFilter.lte = giaDen; 
+    if (giaDen !== undefined) {
+      andConditions.push({Gia: {lte: giaDen}});
     }
-    if (giaTu || giaDen) {
-      where.Gia = giaFilter;
+    if (Array.isArray(maHang) && maHang.length > 0) {
+      where.maHang = {inq: maHang};
     }
-    if (mauSac) {
-      const mauSacArray = mauSac.split(',').map(item => item.trim());
-      if (mauSacArray.length > 0) {
-        where.MauSac = {inq: mauSacArray};
-      }
-    }
-    if(maHang) where.MaHang = maHang; 
-
     if (mucDich) {
-      const mucDichArray = mucDich.split(',').map(item => item.trim());
-      if (mucDichArray.length > 0) {
-        where.MucDich = {inq: mucDichArray};
+      const arr = mucDich.split(',').map(i => i.trim());
+      if (arr.length > 0) {
+        where.MucDich = {inq: arr};
       }
     }
-
+    if (andConditions.length > 0) {
+      where.and = andConditions;
+    }
     return where;
   }
 }

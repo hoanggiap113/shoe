@@ -25,6 +25,12 @@ export class Sanpham extends Entity {
   @property({
     type: 'number',
     required: true,
+    mysql: { // <--- Chỉ cần thêm khối này
+      columnName: 'Gia',
+      dataType: 'decimal',
+      precision: 10,
+      scale: 2,
+    },
   })
   Gia: number;
 

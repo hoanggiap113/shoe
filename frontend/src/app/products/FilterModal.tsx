@@ -16,7 +16,7 @@ export interface IFilterValues {
   ten?: string;
   giaTu?: number;
   giaDen?: number;
-  maHang?: string[];
+  maHang?: number[];
   mucDich?: string[];
 }
 
@@ -63,7 +63,7 @@ export default function FilterModal({
       title="Bộ lọc sản phẩm"
       open={open}
       onCancel={onCancel}
-      footer={null} // Tắt footer mặc định
+      footer={null}
     >
       <Form
         form={form}

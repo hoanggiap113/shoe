@@ -11,7 +11,7 @@ import {
 import api from "@/lib/api";
 import { ISanpham, IHang } from "@/types/product-interfaces";
 import { useEffect, useState } from "react";
-import { Table, Button, Image, Tag, Form } from "antd"; // Bỏ Modal, Input, Select...
+import { Table, Button, Image, Tag, Form } from "antd";
 import formatCurrency from "@/lib/format-currency";
 
 // Import component Modal mới
@@ -22,9 +22,8 @@ export default function ProductPage() {
   const [loading, setLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [filterValues, setFilterValues] = useState<IFilterValues>({});
-  const [form] = Form.useForm<IFilterValues>(); // Hook Ant Form vẫn giữ ở đây
+  const [form] = Form.useForm<IFilterValues>();
 
-  // Định nghĩa cột (Không thay đổi)
   const columns = [
     {
       title: "Ảnh",
@@ -119,14 +118,16 @@ export default function ProductPage() {
       if (filters.giaTu) params.append("giaTu", filters.giaTu.toString());
       if (filters.giaDen) params.append("giaDen", filters.giaDen.toString());
       if (filters.maHang && filters.maHang.length > 0) {
-        params.append("mauSac", filters.maHang.join(","));
+        filters.maHang.forEach((num) =>
+          params.append("maHang", num.toString())
+        );
       }
       if (filters.mucDich && filters.mucDich.length > 0) {
-        params.append("mucDich", filters.mucDich.join(","));
+        filters.mucDich.forEach(str => params.append("mucDich",str))
       }
       console.log(params);
       const queryString = params.toString();
-      console.log(queryString)
+      console.log(queryString);
       const res = await api.get(`/products?${queryString}`);
       setProducts(res.data as ISanpham[]);
     } catch (err) {
