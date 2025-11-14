@@ -1,7 +1,15 @@
-import {Entity, model, property, hasMany, belongsTo} from '@loopback/repository';
-import {Khachhang} from './khachhang.model';
+import {
+  Entity,
+  model,
+  property,
+  hasMany,
+  hasOne,
+  belongsTo,
+} from '@loopback/repository';
 import {Trangthai} from './trangthai.model';
-import { Chitietdonhang } from './chitietdonhang.model';
+import {Chitietdonhang} from './chitietdonhang.model';
+import { DiaChiGiaoHang } from './diachigiaohang.model';
+
 @model({name: 'DonHang'})
 export class Donhang extends Entity {
   @property({
@@ -11,12 +19,27 @@ export class Donhang extends Entity {
   })
   MaDH?: number;
 
-  @belongsTo(() => Khachhang, {name: 'khachhang'})
-  MaKH: number;
+  @property({
+    type: 'string',
+    required: true,
+  })
+  TenKH: string;
+
+  @property({
+    type: 'string',
+    required: true,
+  })
+  SDT: string;
+
+  @property({
+    type: 'string',
+  })
+  Note?: string;
 
   @belongsTo(() => Trangthai, {name: 'trangthai'})
   MaTrangthai: number;
-
+  @hasOne(() => DiaChiGiaoHang, {keyTo: 'MaDH'})
+  MaDiaChi: DiaChiGiaoHang;
   @property({
     type: 'number',
     required: true,
@@ -24,10 +47,10 @@ export class Donhang extends Entity {
   TongTien: number;
 
   @property({
-    type: 'string',
-    required: true,
+    type: 'date',
+    defaultFn: 'now',
   })
-  DiachiGiaohang: string;
+  NgayDat?: string;
 
   @hasMany(() => Chitietdonhang, {keyTo: 'MaDH'})
   chitietdonhangs: Chitietdonhang[];

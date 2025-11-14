@@ -8,9 +8,9 @@ import {RepositoryMixin} from '@loopback/repository';
 import {RestApplication} from '@loopback/rest';
 import {ServiceMixin} from '@loopback/service-proxy';
 import path from 'path';
-import {SanphamService} from './services';
+import {SanphamService, DonhangService} from './services';
 import {MySequence} from './sequence';
-import {MulterFileUploadProvider} from './providers/file-upload.provider'; // <-- IMPORT
+import {MulterFileUploadProvider} from './providers/file-upload.provider';
 
 export {ApplicationConfig};
 
@@ -21,26 +21,22 @@ export class Backend2Application extends BootMixin(
     super(options);
 
     this.service(SanphamService);
-    // Set up the custom sequence
+    this.service(DonhangService);
     this.sequence(MySequence);
     this.bind('middleware.FileUploadProvider').toProvider(
       MulterFileUploadProvider,
     );
-    // Set up default home page
     this.static('/files', path.join(__dirname, '../public'));
     this.static('/', path.join(__dirname, '../public'));
 
-    // Customize @loopback/rest-explorer configuration here
     this.configure(RestExplorerBindings.COMPONENT).to({
       path: '/explorer',
     });
     this.component(RestExplorerComponent);
 
     this.projectRoot = __dirname;
-    // Customize @loopback/boot Booter Conventions here
     this.bootOptions = {
       controllers: {
-        // Customize ControllerBooter Conventions here
         dirs: ['controllers'],
         extensions: ['.controller.js','.controller.ts'],
         nested: true,

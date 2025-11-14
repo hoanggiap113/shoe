@@ -13,15 +13,12 @@ export class SanphamService {
     filters?: Filter<Sanpham>,
     customParams?: CustomFilterParams,
   ): Promise<Sanpham[]> {
-    //Lấy 'where' cơ bản từ 'filters' (nếu có)
     let where: Where<Sanpham> = filters?.where ?? {};
 
-    //Thêm logic lọc tùy chỉnh (nếu có)
     if (customParams && Object.keys(customParams).length > 0) {
       where = this.buildAdvancedWhere(where, customParams);
     }
 
-    //Xây dựng Filter cuối cùng
     const finalFilter: Filter<Sanpham> = {
       ...filters,
       where: where,
@@ -29,13 +26,11 @@ export class SanphamService {
     let includeArray: any[] = [];
     if (finalFilter.include) {
       if (Array.isArray(finalFilter.include)) {
-        // Nếu nó đã là một mảng, chỉ cần gán
         includeArray = finalFilter.include;
       } else {
         includeArray = [finalFilter.include];
       }
     }
-    // Gán lại finalFilter.include để nó CHẮC CHẮN là một mảng
     finalFilter.include = includeArray;
     const hasHangInclude = finalFilter.include.some(
       (item: any) => item.relation === 'hang',

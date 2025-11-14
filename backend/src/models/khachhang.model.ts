@@ -1,5 +1,4 @@
-import {Entity, model, property, hasMany} from '@loopback/repository';
-import { Donhang } from './donhang.model';
+import {Entity, model, property} from '@loopback/repository';
 
 @model({name: 'KhachHang'})
 export class Khachhang extends Entity {
@@ -18,7 +17,6 @@ export class Khachhang extends Entity {
 
   @property({
     type: 'string',
-    required: false,
     jsonSchema: {format: 'email'},
   })
   Email?: string;
@@ -34,9 +32,6 @@ export class Khachhang extends Entity {
     required: true,
   })
   MatKhau: string;
-
-  @hasMany(() => Donhang, {keyTo: 'MaKH'})
-  donhangs: Donhang[];
 
   constructor(data?: Partial<Khachhang>) {
     super(data);
