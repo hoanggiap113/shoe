@@ -13,8 +13,8 @@ export class SanphamService {
     filters?: Filter<Sanpham>,
     customParams?: CustomFilterParams,
   ): Promise<Sanpham[]> {
-    let where: Where<Sanpham> = filters?.where ?? {};
 
+    let where: Where<Sanpham> = filters?.where ?? {};
     if (customParams && Object.keys(customParams).length > 0) {
       where = this.buildAdvancedWhere(where, customParams);
     }
@@ -49,10 +49,8 @@ export class SanphamService {
         'Không tìm thấy sản phẩm nào phù hợp với điều kiện lọc.',
       );
     }
-
     return products;
   }
-
   async getProductById(id: number, filter?: Filter<Sanpham>): Promise<Sanpham> {
     const product = await this.sanphamRepo.findById(id, filter);
     if (!product) {
@@ -68,7 +66,8 @@ export class SanphamService {
       !data.Gia ||
       !data.HinhAnh ||
       !data.MucDich ||
-      !data.TrangThai
+      !data.TrangThai ||
+      !data.MaHang
     ) {
       throw new HttpErrors.BadRequest('Thiếu dữ liệu bắt buộc');
     }
@@ -123,7 +122,7 @@ export class SanphamService {
     customParams: CustomFilterParams,
   ): Where<Sanpham> {
     const where: any = {...baseWhere};
-    const {ten, giaTu, giaDen, mauSac, mucDich} = customParams;
+    const {ten, giaTu, giaDen, mauSac, mucDich,maHang} = customParams;
 
     if (ten) {
       where.TenSP = {like: `%${ten}%`, options: 'i'};
@@ -131,23 +130,22 @@ export class SanphamService {
 
     const giaFilter: any = (where.Gia as any) ?? {};
     if (giaTu) {
-      giaFilter.gte = giaTu; // Lớn hơn hoặc bằng
+      giaFilter.gte = giaTu; 
     }
     if (giaDen) {
-      giaFilter.lte = giaDen; // Nhỏ hơn hoặc bằng
+      giaFilter.lte = giaDen; 
     }
     if (giaTu || giaDen) {
       where.Gia = giaFilter;
     }
-    // 2.3. Lọc theo Màu sắc
     if (mauSac) {
       const mauSacArray = mauSac.split(',').map(item => item.trim());
       if (mauSacArray.length > 0) {
         where.MauSac = {inq: mauSacArray};
       }
     }
+    if(maHang) where.MaHang = maHang; 
 
-    // 2.4. Lọc theo Mục đích
     if (mucDich) {
       const mucDichArray = mucDich.split(',').map(item => item.trim());
       if (mucDichArray.length > 0) {

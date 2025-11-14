@@ -118,14 +118,15 @@ export default function ProductPage() {
       if (filters.ten) params.append("ten", filters.ten);
       if (filters.giaTu) params.append("giaTu", filters.giaTu.toString());
       if (filters.giaDen) params.append("giaDen", filters.giaDen.toString());
-      if (filters.mauSac && filters.mauSac.length > 0) {
-        params.append("mauSac", filters.mauSac.join(","));
+      if (filters.maHang && filters.maHang.length > 0) {
+        params.append("mauSac", filters.maHang.join(","));
       }
       if (filters.mucDich && filters.mucDich.length > 0) {
         params.append("mucDich", filters.mucDich.join(","));
       }
-
+      console.log(params);
       const queryString = params.toString();
+      console.log(queryString)
       const res = await api.get(`/products?${queryString}`);
       setProducts(res.data as ISanpham[]);
     } catch (err) {

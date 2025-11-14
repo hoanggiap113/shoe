@@ -30,6 +30,7 @@ export class SanphamController {
     @param.query.number('giaDen') giaDen?: number,
     @param.query.string('mauSac') mauSac?: string,
     @param.query.string('mucDich') mucDich?: string,
+    @param.query.number('maHang') maHang?: number, 
   ): Promise<Sanpham[]> {
     try {
       const customParams: CustomFilterParams = {
@@ -38,6 +39,8 @@ export class SanphamController {
         giaDen,
         mauSac,
         mucDich,
+        maHang,
+        
       };
       return await this.productService.getSanpham(filter,customParams);
     } catch (error) {
