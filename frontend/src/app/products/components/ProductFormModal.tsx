@@ -37,10 +37,13 @@ export const ProductFormModal: React.FC<ProductFormProps> = ({
   const GIOITINH = [
     { label: "Nam", value: "Nam" },
     { label: "Nữ", value: "Nữ" },
+    { label: "Unisex", value: "Unisex" },
   ];
   const TRANGTHAI = [
     { label: "Còn bán", value: "Còn bán" },
     { label: "Hết hàng", value: "Hết hàng" },
+    { label: "Ngừng bán", value: "Ngừng bán" },
+
   ];
 
   const [form] = Form.useForm();

@@ -19,7 +19,6 @@ export class SanphamService {
 
     const baseWhere: Where<Sanpham> = filters?.where ?? {};
     if (Object.keys(baseWhere).length > 0) {
-
       if ('and' in baseWhere && Array.isArray(baseWhere.and)) {
         allConditions.push(...baseWhere.and);
       } else {
@@ -62,9 +61,6 @@ export class SanphamService {
   }
 
   async create(data: Omit<Sanpham, 'MaSP'>): Promise<Sanpham> {
-    if (!data.TenSP || data.TenSP.trim() === '') {
-      throw new HttpErrors.BadRequest('Thiếu dữ liệu tên sản phẩm');
-    }
     if (
       !data.Gia ||
       data.Gia < 0 ||
@@ -82,8 +78,8 @@ export class SanphamService {
         'Tên sản phẩm đã tồn tại, vui lòng chọn tên khác',
       );
     }
-    
-    const newProduct = await this.sanphamRepo.create(data)
+
+    const newProduct = await this.sanphamRepo.create(data);
     return newProduct;
   }
 
@@ -91,19 +87,6 @@ export class SanphamService {
     const product = await this.sanphamRepo.findById(id);
     if (!product) {
       throw new HttpErrors.NotFound('Không tìm thấy sản phẩm để cập nhật');
-    }
-    if (data.TenSP && data.TenSP.trim() !== '') {
-      const dup = await this.sanphamRepo.findOne({
-        where: {
-          TenSP: data.TenSP.trim(),
-          MaSP: {neq: id},
-        },
-      });
-      if (dup) {
-        throw new HttpErrors.Conflict(
-          'Tên sản phẩm đã tồn tại, vui lòng chọn tên khác',
-        );
-      }
     }
 
     await this.sanphamRepo.updateById(id, data);
