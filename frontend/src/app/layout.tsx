@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Agenda",
+  title: "ShoeMaker Admin",
   description: "Quản lý phòng",
 };
 
