@@ -190,7 +190,7 @@ export const ProductFormModal: React.FC<ProductFormProps> = ({
             <Col span={12}>
               <Form.Item
                 label="Số lượng"
-                name="SoluongTon"
+                name="SoLuongTon"
                 rules={[{ required: true, message: "Vui lòng nhập số lượng" }]}
               >
                 <InputNumber min={0} style={{ width: "100%" }} />

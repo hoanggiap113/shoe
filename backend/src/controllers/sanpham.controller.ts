@@ -97,6 +97,7 @@ export class SanphamController {
     body: Omit<Sanpham, 'MaSP'>,
   ): Promise<Sanpham> {
     try {
+      console.log(body);
       return await this.productService.create(body);
     } catch (error) {
       throw error;

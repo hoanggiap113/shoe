@@ -42,6 +42,9 @@ export default function ProductPage() {
       setLoading(true);
       const res = await api.get("/products", {
         params: apiParams,
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
       setProducts(res.data as ISanpham[]);
     } catch (err) {
@@ -67,14 +70,21 @@ export default function ProductPage() {
   };
   const handleSubmitAddForm = async (values: ISanpham) => {
     try {
-      const res = await api.post("/products", values);
+      if(values.KichCo){
+        values.KichCo = String(values.KichCo);
+      };
+      const res = await api.post("/products", values, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
       if (res) {
-        message.success("Tạo sản phẩm thành công");
-        fetchProducts(filterValues); // Refresh lại danh sách
+        alert("Tạo sản phẩm thành công");
         setIsAddModalOpen(false);
       }
+      fetchProducts(filterValues);
     } catch (err) {
-      message.error("Có lỗi xảy ra, vui lòng thử lại sau");
+      alert("Có lỗi máy chủ, vui lòng thử lại sau");
       console.log(err);
     }
   };
@@ -83,16 +93,22 @@ export default function ProductPage() {
   };
   const handleSubmitEditForm = async (values: ISanpham) => {
     if (!selectedProduct) return;
-
+    if(values.KichCo){
+      values.KichCo = String(values.KichCo);
+    }
     try {
       setLoading(true);
-      await api.patch(`/products/${selectedProduct.MaSP}`, values);
-      message.success("Cập nhật sản phẩm thành công");
-      fetchProducts(filterValues); // Refresh lại danh sách
+      await api.patch(`/products/${selectedProduct.MaSP}`, values, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      alert("Cập nhật sản phẩm thành công");
       setIsEditModalOpen(false);
       setSelectedProduct(null);
+      fetchProducts(filterValues);
     } catch (err) {
-      message.error("Có lỗi máy chủ, vui lòng thử lại sau");
+      alert("Có lỗi máy chủ, vui lòng thử lại sau");
       console.log("Error:", err);
     } finally {
       setLoading(false);
@@ -103,11 +119,15 @@ export default function ProductPage() {
       const confirmed = confirm("Bạn có chắc muốn xóa sản phẩm này?");
       if (!confirmed) return;
       setLoading(true);
-      await api.delete(`/products/${productId}`);
-      message.success("Xóa sản phẩm thành công");
+      await api.delete(`/products/${productId}`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      alert("Xóa sản phẩm thành công");
       fetchProducts(filterValues);
     } catch (err) {
-      message.error("Có lỗi máy chủ, vui lòng thử lại sau");
+      alert("Có lỗi máy chủ, vui lòng thử lại sau");
       console.log("Error:", err);
     } finally {
       setLoading(false);
@@ -124,7 +144,7 @@ export default function ProductPage() {
     setIsEditModalOpen(false);
     setSelectedProduct(null);
   };
-  const columns = ProductTable(handleDeleteProduct, handleSubmitEditForm);
+  const columns = ProductTable(handleDeleteProduct, handleOpenEditModal);
 
   return (
     <>
@@ -149,7 +169,7 @@ export default function ProductPage() {
                 : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             }`}
             disabled={loading}
-            onClick={() => fetchProducts(filterValues)}
+            onClick={() => fetchProducts()}
           >
             <UndoOutlined
               className={loading ? "animate-spin text-gray-400" : ""}

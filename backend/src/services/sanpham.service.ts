@@ -45,8 +45,6 @@ export class SanphamService {
     };
 
     const products = await this.sanphamRepo.find(finalFilter);
-    console.log('Final filter:', JSON.stringify(finalFilter, null, 2));
-    console.log('Products found:', products.length);
     return products.length > 0 ? products : [];
   }
 
