@@ -21,7 +21,6 @@ export interface ISanpham {
   GioiTinh?: string;
   MucDich: string;
   TrangThai: string;
-
-  // Thuộc tính này sẽ được nạp khi bạn dùng filter[include]=hang
   hang?: IHang; 
 }
+

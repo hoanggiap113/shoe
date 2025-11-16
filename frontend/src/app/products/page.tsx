@@ -11,11 +11,11 @@ import {
 import api from "@/lib/api";
 import { ISanpham, IHang } from "@/types/product-interfaces";
 import { useEffect, useState } from "react";
-import { Table, Button, Image, Tag, Form } from "antd";
-import formatCurrency from "@/lib/format-currency";
-
+import { Table, Button, Image, Tag, Form, App } from "antd";
+import { ProductFormModal } from "./components/ProductFormModal";
+import ProductTable from "./components/ProductTable";
 // Import component Modal mới
-import FilterModal, { IFilterValues } from "./FilterModal";
+import FilterModal, { IFilterValues } from "./components/FilterModal";
 
 export default function ProductPage() {
   const [products, setProducts] = useState<ISanpham[]>([]);
@@ -23,112 +23,26 @@ export default function ProductPage() {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [filterValues, setFilterValues] = useState<IFilterValues>({});
   const [form] = Form.useForm<IFilterValues>();
-
-  const columns = [
-    {
-      title: "Ảnh",
-      dataIndex: "HinhAnh",
-      key: "HinhAnh",
-      render: (hinhAnh: string) => {
-        if (!hinhAnh) return "Không có ảnh";
-        const fullImageUrl = `${process.env.NEXT_PUBLIC_API_URL}${hinhAnh}`;
-        return (
-          <Image
-            src={fullImageUrl}
-            alt="Ảnh sản phẩm"
-            width={80}
-            height={60}
-            style={{ objectFit: "cover" }}
-            preview={true}
-          />
-        );
-      },
-    },
-    {
-      title: "Tên sản phẩm",
-      dataIndex: "TenSP",
-      key: "TenSP",
-      render: (text: string, record: ISanpham) =>
-        record.MaSP ? (
-          <Link
-            href={`/products/${record.MaSP}`}
-            className="text-blue-600 hover:underline"
-          >
-            {text}
-          </Link>
-        ) : (
-          <span>{text}</span>
-        ),
-    },
-    {
-      title: "Giá",
-      dataIndex: "Gia",
-      key: "Gia",
-      render: (gia: number) => formatCurrency(gia),
-    },
-    {
-      title: "Số lượng tồn",
-      dataIndex: "SoluongTon",
-      key: "SoluongTon",
-    },
-    {
-      title: "Hãng",
-      dataIndex: "hang",
-      key: "hang",
-      render: (hang: IHang) => hang?.TenHang || "Không rõ",
-    },
-    {
-      title: "Trạng thái",
-      dataIndex: "TrangThai",
-      key: "TrangThai",
-      render: (trangThai: string) => (
-        <Tag color={trangThai === "Còn bán" ? "green" : "red"}>{trangThai}</Tag>
-      ),
-    },
-    {
-      title: "Thao tác",
-      key: "actions",
-      align: "center" as const,
-      render: (record: ISanpham) => (
-        <div className="flex justify-center gap-3">
-          <Link href={`/products/edit/${record.MaSP}`}>
-            <Button
-              type="text"
-              icon={<EditOutlined />}
-              className="text-blue-600"
-            />
-          </Link>
-          <Button type="text" icon={<DeleteOutlined />} danger />
-        </div>
-      ),
-    },
-  ];
-
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const { message } = App.useApp();
+  const [selectedProduct, setSelectedProduct] = useState<ISanpham | null>(null);
   useEffect(() => {
-    fetchProducts(filterValues);
-  }, [filterValues]);
+    fetchProducts();
+  }, []);
 
-  const fetchProducts = async (filters: IFilterValues = {}) => {
+  const fetchProducts = async (filters?: IFilterValues) => {
     try {
+      let apiParams = {};
+      if (filters && Object.keys(filters).length > 0) {
+        apiParams = {
+          customFilters: filters,
+        };
+      }
       setLoading(true);
-      const params = new URLSearchParams();
-      params.append("filter[include]", "hang");
-
-      if (filters.ten) params.append("ten", filters.ten);
-      if (filters.giaTu) params.append("giaTu", filters.giaTu.toString());
-      if (filters.giaDen) params.append("giaDen", filters.giaDen.toString());
-      if (filters.maHang && filters.maHang.length > 0) {
-        filters.maHang.forEach((num) =>
-          params.append("maHang", num.toString())
-        );
-      }
-      if (filters.mucDich && filters.mucDich.length > 0) {
-        filters.mucDich.forEach(str => params.append("mucDich",str))
-      }
-      console.log(params);
-      const queryString = params.toString();
-      console.log(queryString);
-      const res = await api.get(`/products?${queryString}`);
+      const res = await api.get("/products", {
+        params: apiParams,
+      });
       setProducts(res.data as ISanpham[]);
     } catch (err) {
       console.log("Lỗi khi tải sản phẩm", err);
@@ -141,6 +55,7 @@ export default function ProductPage() {
   const handleFilterSubmit = (values: IFilterValues) => {
     setFilterValues(values);
     setIsModalVisible(false);
+    fetchProducts(values);
   };
 
   // Hàm xử lý khi bấm "Xóa lọc"
@@ -148,7 +63,68 @@ export default function ProductPage() {
     setFilterValues({});
     form.resetFields();
     setIsModalVisible(false);
+    fetchProducts({});
   };
+  const handleSubmitAddForm = async (values: ISanpham) => {
+    try {
+      const res = await api.post("/products", values);
+      if (res) {
+        message.success("Tạo sản phẩm thành công");
+        fetchProducts(filterValues); // Refresh lại danh sách
+        setIsAddModalOpen(false);
+      }
+    } catch (err) {
+      message.error("Có lỗi xảy ra, vui lòng thử lại sau");
+      console.log(err);
+    }
+  };
+  const handleCloseAddForm = () => {
+    setIsAddModalOpen(false);
+  };
+  const handleSubmitEditForm = async (values: ISanpham) => {
+    if (!selectedProduct) return;
+
+    try {
+      setLoading(true);
+      await api.patch(`/products/${selectedProduct.MaSP}`, values);
+      message.success("Cập nhật sản phẩm thành công");
+      fetchProducts(filterValues); // Refresh lại danh sách
+      setIsEditModalOpen(false);
+      setSelectedProduct(null);
+    } catch (err) {
+      message.error("Có lỗi máy chủ, vui lòng thử lại sau");
+      console.log("Error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+  const handleDeleteProduct = async (productId: number) => {
+    try {
+      const confirmed = confirm("Bạn có chắc muốn xóa sản phẩm này?");
+      if (!confirmed) return;
+      setLoading(true);
+      await api.delete(`/products/${productId}`);
+      message.success("Xóa sản phẩm thành công");
+      fetchProducts(filterValues);
+    } catch (err) {
+      message.error("Có lỗi máy chủ, vui lòng thử lại sau");
+      console.log("Error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+  const handleOpenEditModal = (product: ISanpham) => {
+    setSelectedProduct(product);
+    setIsEditModalOpen(true);
+  };
+  const handleIsAddModal = () => {
+    setIsAddModalOpen(true);
+  };
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setSelectedProduct(null);
+  };
+  const columns = ProductTable(handleDeleteProduct, handleSubmitEditForm);
 
   return (
     <>
@@ -159,12 +135,13 @@ export default function ProductPage() {
 
         {/* Action buttons (Không thay đổi) */}
         <div className="flex items-center gap-3 mb-4">
-          <Link href={"/products/add"}>
-            <button className="bg-gray-300 flex items-center gap-2 px-4 py-2 rounded-lg transition hover:bg-gray-200 cursor-pointer">
-              <PlusCircleOutlined />
-              <span>Thêm sản phẩm</span>
-            </button>
-          </Link>
+          <button
+            className="bg-gray-300 flex items-center gap-2 px-4 py-2 rounded-lg transition hover:bg-gray-200 cursor-pointer"
+            onClick={() => setIsAddModalOpen(true)}
+          >
+            <PlusCircleOutlined />
+            <span>Thêm sản phẩm</span>
+          </button>
           <button
             className={`flex items-center gap-2 px-4 py-2 rounded-lg transition ${
               loading
@@ -216,7 +193,6 @@ export default function ProductPage() {
         </div>
       </main>
 
-      {/* === MODAL LỌC (Đã được tách) === */}
       <FilterModal
         open={isModalVisible}
         form={form}
@@ -224,6 +200,17 @@ export default function ProductPage() {
         onCancel={() => setIsModalVisible(false)}
         onFilter={handleFilterSubmit}
         onClear={handleClearFilter}
+      />
+      <ProductFormModal
+        visible={isAddModalOpen}
+        onClose={handleCloseAddForm}
+        onSubmit={handleSubmitAddForm}
+      />
+      <ProductFormModal
+        visible={isEditModalOpen}
+        onClose={handleCloseEditModal}
+        onSubmit={handleSubmitEditForm}
+        productData={selectedProduct}
       />
     </>
   );

@@ -23,24 +23,33 @@ export class SanphamController {
 
   // GET LIST
   @get('/products')
-  @response(200)
+  @response(200, {
+    content: {
+      'application/json': {
+        schema: {
+          type: 'array',
+          items: getModelSchemaRef(Sanpham, {includeRelations: true}),
+        },
+      },
+    },
+  })
   async getSanphams(
-    @param.query.object('filter') filter?: Filter<Sanpham>,
-    @param.query.string('ten') ten?: string,
-    @param.query.number('giaTu') giaTu?: number,
-    @param.query.number('giaDen') giaDen?: number,
-    @param.query.string('mucDich') mucDich?: string,
-    @param.query.number('maHang') maHang?: number[], 
+    @param.filter(Sanpham) filter?: Filter<Sanpham>,
+    @param.query.object('customFilters', {
+      type: 'object',
+      properties: {
+        ten: {type: 'string'},
+        giaDen: {type: 'number'},
+        giaTu: {type: 'number'},
+        mucDich: {type: 'array', items: {type: 'string'}},
+        maHang: {type: 'array', items: {type: 'number'}},
+      },
+    })
+    customFilterParams?: CustomFilterParams,
   ): Promise<Sanpham[]> {
     try {
-      const customParams: CustomFilterParams = {
-        ten,
-        giaTu,
-        giaDen,
-        mucDich,
-        maHang,
-      };
-      return await this.productService.getSanpham(filter,customParams);
+      console.log(customFilterParams);
+      return await this.productService.getSanpham(filter, customFilterParams);
     } catch (error) {
       throw error;
     }
@@ -48,14 +57,13 @@ export class SanphamController {
 
   // GET BY ID
   @get('/products/{id}')
-  @response(200,{
-    content:{
+  @response(200, {
+    content: {
       'application/json': {
-        schema: getModelSchemaRef(Sanpham,{includeRelations: true})
-      }
-    }
-  }
-  )
+        schema: getModelSchemaRef(Sanpham, {includeRelations: true}),
+      },
+    },
+  })
   async getSanphamById(
     @param.path.number('id') id: number,
     @param.query.object('filter') filter?: Filter<Sanpham>,
@@ -71,9 +79,22 @@ export class SanphamController {
 
   // CREATE
   @post('/products')
-  @response(201)
+  @response(201, {
+    description: 'Sanpham model instance',
+    content: {'application/json': {schema: getModelSchemaRef(Sanpham)}},
+  })
   async createSanpham(
-    @requestBody() body: Omit<Sanpham, 'MaSP'>,
+    @requestBody({
+      content: {
+        'application/json': {
+          schema: getModelSchemaRef(Sanpham, {
+            title: 'NewProduct',
+            exclude: ['MaSP'],
+          }),
+        },
+      },
+    })
+    body: Omit<Sanpham, 'MaSP'>,
   ): Promise<Sanpham> {
     try {
       return await this.productService.create(body);
@@ -84,13 +105,20 @@ export class SanphamController {
 
   // UPDATE
   @patch('/products/{id}')
-  @response(204)
+  @response(204, {description: 'Sanpham PATCH success'})
   async updateSanpham(
     @param.path.number('id') id: number,
-    @requestBody() data: Partial<Sanpham>,
+    @requestBody({
+      content: {
+        'application/json': {
+          schema: getModelSchemaRef(Sanpham, {partial: true}),
+        },
+      },
+    })
+    body: Partial<Sanpham>,
   ): Promise<void> {
     try {
-      await this.productService.update(id, data);
+      await this.productService.update(id, body);
     } catch (error) {
       throw error;
     }
@@ -98,7 +126,9 @@ export class SanphamController {
 
   // DELETE
   @del('/products/{id}')
-  @response(204)
+  @response(204, {
+    description: 'Sanpham DELETE success',
+  })
   async deleteSanpham(@param.path.number('id') id: number): Promise<void> {
     try {
       await this.productService.delete(id);

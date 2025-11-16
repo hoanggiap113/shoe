@@ -4,38 +4,50 @@ import {SanphamRepository} from '../repositories/sanpham.repository';
 import {repository, Filter, Where} from '@loopback/repository';
 import {Sanpham} from '../models';
 import {CustomFilterParams} from '../interface/productFilterParams';
+
 @injectable({scope: BindingScope.TRANSIENT})
 export class SanphamService {
   constructor(
     @repository(SanphamRepository) private sanphamRepo: SanphamRepository,
   ) {}
+
   async getSanpham(
     filters?: Filter<Sanpham>,
     customParams?: CustomFilterParams,
   ): Promise<Sanpham[]> {
-    // Gom điều kiện where
-    const finalWhere: any = filters?.where ? {...filters.where} : {};
+    const allConditions: Where<Sanpham>[] = [{IsActive: true}];
 
-    if (customParams) {
-      Object.assign(finalWhere, this.buildAdvancedWhere(customParams));
+    const baseWhere: Where<Sanpham> = filters?.where ?? {};
+    if (Object.keys(baseWhere).length > 0) {
+
+      if ('and' in baseWhere && Array.isArray(baseWhere.and)) {
+        allConditions.push(...baseWhere.and);
+      } else {
+        allConditions.push(baseWhere);
+      }
     }
 
+    if (customParams) {
+      const advancedConditions = this.buildAdvancedConditions(customParams);
+      allConditions.push(...advancedConditions);
+    }
+
+    let finalWhere: Where<Sanpham> = {};
+    if (allConditions.length > 0) {
+      finalWhere = {and: allConditions};
+    }
+
+    const finalInclude = [...(filters?.include ?? []), {relation: 'hang'}];
     const finalFilter: Filter<Sanpham> = {
       ...filters,
       where: finalWhere,
-      include: [{relation: 'hang'}],
+      include: finalInclude,
     };
-    console.log(finalFilter);
 
     const products = await this.sanphamRepo.find(finalFilter);
-
-    if (products.length === 0 && Object.keys(finalWhere).length > 0) {
-      throw new HttpErrors.NotFound(
-        'Không tìm thấy sản phẩm nào phù hợp với điều kiện lọc.',
-      );
-    }
-
-    return products;
+    console.log('Final filter:', JSON.stringify(finalFilter, null, 2));
+    console.log('Products found:', products.length);
+    return products.length > 0 ? products : [];
   }
 
   async getProductById(id: number, filter?: Filter<Sanpham>): Promise<Sanpham> {
@@ -52,36 +64,37 @@ export class SanphamService {
   }
 
   async create(data: Omit<Sanpham, 'MaSP'>): Promise<Sanpham> {
-    if (
-      !data.TenSP ||
-      !data.Gia ||
-      !data.HinhAnh ||
-      !data.MucDich ||
-      !data.TrangThai ||
-      !data.MaHang
-    ) {
-      throw new HttpErrors.BadRequest('Thiếu dữ liệu bắt buộc');
+    if (!data.TenSP || data.TenSP.trim() === '') {
+      throw new HttpErrors.BadRequest('Thiếu dữ liệu tên sản phẩm');
     }
-
-    const exist = await this.sanphamRepo.findOne({
+    if (
+      !data.Gia ||
+      data.Gia < 0 ||
+      isNaN(data.Gia) ||
+      !isFinite(data.Gia) ||
+      typeof data.Gia !== 'number'
+    ) {
+      throw new HttpErrors.BadRequest('Giá sản phẩm không hợp lệ');
+    }
+    const existing = await this.sanphamRepo.findOne({
       where: {TenSP: data.TenSP.trim()},
     });
-
-    if (exist) {
-      throw new HttpErrors.Conflict('Tên sản phẩm đã tồn tại');
+    if (existing) {
+      throw new HttpErrors.Conflict(
+        'Tên sản phẩm đã tồn tại, vui lòng chọn tên khác',
+      );
     }
-
-    return this.sanphamRepo.create(data);
+    
+    const newProduct = await this.sanphamRepo.create(data)
+    return newProduct;
   }
 
-  // UPDATE
   async update(id: number, data: Partial<Sanpham>): Promise<void> {
     const product = await this.sanphamRepo.findById(id);
     if (!product) {
       throw new HttpErrors.NotFound('Không tìm thấy sản phẩm để cập nhật');
     }
-
-    if (data.TenSP) {
+    if (data.TenSP && data.TenSP.trim() !== '') {
       const dup = await this.sanphamRepo.findOne({
         where: {
           TenSP: data.TenSP.trim(),
@@ -98,42 +111,42 @@ export class SanphamService {
     await this.sanphamRepo.updateById(id, data);
   }
 
-  // DELETE
   async delete(id: number): Promise<void> {
     const product = await this.sanphamRepo.findById(id);
     if (!product) {
       throw new HttpErrors.NotFound('Không tìm thấy sản phẩm để xóa');
     }
-
-    await this.sanphamRepo.deleteById(id);
+    await this.sanphamRepo.updateById(id, {IsActive: false});
   }
 
-  private buildAdvancedWhere(params: CustomFilterParams): Where<Sanpham> {
-    const where: any = {};
+  private buildAdvancedConditions(
+    params: CustomFilterParams,
+  ): Where<Sanpham>[] {
     const {ten, giaTu, giaDen, mucDich, maHang} = params;
+    const conditions: Where<Sanpham>[] = [];
 
-    const andConditions: Where<Sanpham>[] = [];
     if (ten && ten.trim() !== '') {
-      where.TenSp = {like: `%${ten}%`, options: 'i'};
+      conditions.push({TenSP: {like: `%${ten.trim()}%`}});
     }
-    if (giaTu !== undefined) {
-      andConditions.push({Gia: {gte: giaTu}});
+
+    // Bắt buộc 2 cái này phải kiểm tra undefined và null vì giá có thể là 0 và phải chuyển type lần nữa ko có nó lỗi và tách riêng nó ra.
+    if (giaTu !== undefined && giaTu !== null) {
+      const giaTuNum = Number(giaTu);
+      conditions.push({Gia: {gte: giaTuNum}});
     }
-    if (giaDen !== undefined) {
-      andConditions.push({Gia: {lte: giaDen}});
+
+    if (giaDen !== undefined && giaDen !== null) {
+      const giaDenNum = Number(giaDen);
+      conditions.push({Gia: {lte: giaDenNum}});
     }
+
     if (Array.isArray(maHang) && maHang.length > 0) {
-      where.maHang = {inq: maHang};
+      conditions.push({MaHang: {inq: maHang}});
     }
-    if (mucDich) {
-      const arr = mucDich.split(',').map(i => i.trim());
-      if (arr.length > 0) {
-        where.MucDich = {inq: arr};
-      }
+
+    if (Array.isArray(mucDich) && mucDich.length > 0) {
+      conditions.push({MucDich: {inq: mucDich}});
     }
-    if (andConditions.length > 0) {
-      where.and = andConditions;
-    }
-    return where;
+    return conditions;
   }
 }

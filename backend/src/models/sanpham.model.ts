@@ -38,7 +38,7 @@ export class Sanpham extends Entity {
     type: 'number',
     default: 0,
   })
-  SoluongTon: number;
+  SoLuongTon: number;
 
   @property({
     type: 'string',
@@ -76,6 +76,11 @@ export class Sanpham extends Entity {
   })
   TrangThai: string;
 
+  @property({
+    type: 'boolean',
+    default: true,
+  })
+  IsActive?: boolean;
   constructor(data?: Partial<Sanpham>) {
     super(data);
   }

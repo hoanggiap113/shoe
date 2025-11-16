@@ -151,7 +151,7 @@ export default function ProductDetailPage() {
                 <DetailItem label="Kích cỡ" value={product.KichCo} />
                 <DetailItem label="Giới tính" value={product.GioiTinh} />
                 <DetailItem label="Mục đích" value={product.MucDich} />
-                <DetailItem label="Mã SP" value={product.MaSP} />
+                <DetailItem label="Mã SP" value={product.hang?.TenHang} />
               </div>
             </div>
           </div>

@@ -1,5 +1,7 @@
 "use client";
 
+import { BRAND_OPTIONS } from "@/types/brand-type";
+import { MUC_DICH_OPTIONS } from "@/types/type-interface";
 import {
   Modal,
   Form,
@@ -21,25 +23,7 @@ export interface IFilterValues {
 }
 
 // === CÁC LỰA CHỌN CHO FILTER (VÍ DỤ) ===
-const MAU_SAC_OPTIONS = [
-  { label: "Trắng", value: "Trắng" },
-  { label: "Đen", value: "Đen" },
-  { label: "Xanh", value: "Xanh" },
-  { label: "Đỏ", value: "Đỏ" },
-  { label: "Hồng", value: "Hồng" },
-];
-const MUC_DICH_OPTIONS = [
-  { label: "Đi chơi", value: "Đi chơi" },
-  { label: "Chạy bộ", value: "Chạy bộ" },
-  { label: "Văn phòng", value: "Văn phòng" },
-  { label: "Thể thao", value: "Thể thao" },
-];
-const HANG_OPTION = [
-  { label: "Nike", value: 1 },
-  { label: "Adidas", value: 2 },
-  { label: "Puma", value: 3 },
-  { label: "Converse", value: 4 },
-];
+
 
 interface FilterModalProps {
   open: boolean;
@@ -112,7 +96,7 @@ export default function FilterModal({
             mode="multiple"
             allowClear
             placeholder="Chọn hãng"
-            options={HANG_OPTION}
+            options={BRAND_OPTIONS}
           />
         </Form.Item>
 
