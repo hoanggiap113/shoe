@@ -84,7 +84,8 @@ export default function ProductPage() {
       }
       fetchProducts(filterValues);
     } catch (err) {
-      alert("Có lỗi máy chủ, vui lòng thử lại sau");
+      alert("Có lỗi máy chủ");
+      setIsAddModalOpen(true);
       console.log(err);
     }
   };

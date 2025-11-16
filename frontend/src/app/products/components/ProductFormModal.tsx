@@ -113,9 +113,9 @@ export const ProductFormModal: React.FC<ProductFormProps> = ({
     } catch (err: unknown) {
       if (err && typeof err === "object" && "errorFields" in err) {
         // Lỗi validate
-        message.error("Vui lòng kiểm tra lại các trường thông tin");
+        alert("Vui lòng kiểm tra lại các trường thông tin");
       } else {
-        message.error("Có lỗi khi lưu sản phẩm");
+        alert("Có lỗi khi lưu sản phẩm");
       }
     } finally {
       setUploading(false);
